@@ -457,7 +457,7 @@ class OpenAITranslator(BaseTranslator):
         self.add_cache_impact_parameters("think_filter_regex", think_filter_regex)
         self.think_filter_regex = re.compile(think_filter_regex, flags=re.DOTALL)
         # Parse stream option from config (default to True for OpenAI)
-        stream_val = self.envs.get("OPENAI_STREAM", "true").lower()
+        stream_val = (self.envs.get("OPENAI_STREAM") or "true").lower()
         self.stream = stream_val == "true"
 
     @retry(
@@ -525,7 +525,7 @@ class AzureOpenAITranslator(BaseTranslator):
         base_url = self.envs["AZURE_OPENAI_BASE_URL"]
         if not model:
             model = self.envs["AZURE_OPENAI_MODEL"]
-        api_version = self.envs.get("AZURE_OPENAI_API_VERSION", "2024-06-01")
+        api_version = self.envs.get("AZURE_OPENAI_API_VERSION") or "2024-06-01"
         if api_key is None:
             api_key = self.envs["AZURE_OPENAI_API_KEY"]
         super().__init__(lang_in, lang_out, model, ignore_cache)
@@ -954,7 +954,7 @@ class GrokTranslator(OpenAITranslator):
         self, lang_in, lang_out, model, envs=None, prompt=None, ignore_cache=False
     ):
         self.set_envs(envs)
-        base_url = self.envs.get("GROK_BASE_URL", "https://api.x.ai/v1")
+        base_url = self.envs.get("GROK_BASE_URL") or "https://api.x.ai/v1"
         api_key = self.envs["GROK_API_KEY"]
         if not model:
             model = self.envs["GROK_MODEL"]
@@ -968,7 +968,7 @@ class GrokTranslator(OpenAITranslator):
         )
         self.prompttext = prompt
         # Override stream setting from config (default to True)
-        stream_val = self.envs.get("GROK_STREAM", "true").lower()
+        stream_val = (self.envs.get("GROK_STREAM") or "true").lower()
         self.stream = stream_val == "true"
 
 
@@ -1092,11 +1092,11 @@ class OpenAIlikedTranslator(OpenAITranslator):
             api_key=api_key,
             ignore_cache=ignore_cache,
             prompt=prompt,
-            stop_tokens=self.envs.get("OPENAILIKED_STOP_TOKENS", "").split(),
-            max_tokens=int(self.envs.get("OPENAILIKED_MAX_TOKENS", -1)),
+            stop_tokens=(self.envs.get("OPENAILIKED_STOP_TOKENS") or "").split(),
+            max_tokens=int(self.envs.get("OPENAILIKED_MAX_TOKENS") or -1),
         )
         # Parse stream option from config (default to False for compatibility)
-        stream_val = self.envs.get("OPENAILIKED_STREAM", "false").lower()
+        stream_val = (self.envs.get("OPENAILIKED_STREAM") or "false").lower()
         self.stream = stream_val == "true"
 
     def do_translate(self, text) -> str:

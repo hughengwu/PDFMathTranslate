@@ -140,6 +140,9 @@ env/
 venv/
 ENV/
 env.bak/
+
+# Gradio cache
+.gradio/
 venv.bak/
 pdf2zh-dev/
 

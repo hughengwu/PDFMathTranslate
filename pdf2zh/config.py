@@ -60,20 +60,34 @@ class ConfigManager:
                 json.dump(cleaned_data, f, indent=4, ensure_ascii=False)
 
     def _remove_circular_references(self, obj, seen=None):
-        """递归移除循环引用"""
+        """递归移除循环引用
+
+        Only dicts/lists can actually participate in a reference cycle, so only
+        their identities are tracked. Scalars (str/int/bool/None) are returned
+        as-is: CPython interns small ints and short strings, so two unrelated
+        config values (e.g. two "" defaults) can share the same id(); treating
+        that as a cycle previously corrupted unrelated fields to null.
+        `seen` is per-path (a new set is passed to children), so sibling
+        branches don't falsely collide either.
+        """
         if seen is None:
             seen = set()
-        obj_id = id(obj)
-        if obj_id in seen:
-            return None  # 遇到已处理过的对象，视为循环引用
-        seen.add(obj_id)
 
         if isinstance(obj, dict):
+            obj_id = id(obj)
+            if obj_id in seen:
+                return None  # 遇到已处理过的对象，视为循环引用
+            child_seen = seen | {obj_id}
             return {
-                k: self._remove_circular_references(v, seen) for k, v in obj.items()
+                k: self._remove_circular_references(v, child_seen)
+                for k, v in obj.items()
             }
         elif isinstance(obj, list):
-            return [self._remove_circular_references(i, seen) for i in obj]
+            obj_id = id(obj)
+            if obj_id in seen:
+                return None
+            child_seen = seen | {obj_id}
+            return [self._remove_circular_references(i, child_seen) for i in obj]
         return obj
 
     @classmethod
